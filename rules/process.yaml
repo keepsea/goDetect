@@ -1,0 +1,26 @@
+# =============================================================================
+# FILE: rules/process.yaml
+# 作用: 定义与可疑进程相关的检测规则。
+# =============================================================================
+rules:
+  - name: "Suspicious_Process_From_Temp_Directory"
+    enabled: true
+    description: "检测从/tmp或/var/tmp等临时目录启动的进程，这是恶意软件的常见行为。"
+    target_check: "SuspiciousProcessesCheck"
+    type: "regex"
+    patterns:
+      - "/tmp/"
+      - "/var/tmp/"
+    risk_level: "High"
+  
+  - name: "Process_With_Suspicious_Name"
+    enabled: true
+    description: "检测进程名中包含常见的黑客工具或矿机程序名称。"
+    target_check: "SuspiciousProcessesCheck"
+    type: "keyword"
+    patterns:
+      - "kworkerds"
+      - "kerberods"
+      - "xmrig"
+      - "minerd"
+    risk_level: "Critical"

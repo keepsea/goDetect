@@ -1,0 +1,37 @@
+# goDetect 威胁情报 IOC (Indicator of Compromise) 文件
+#
+# 此文件包含已知的恶意指标（IP地址、文件名模式等）。
+# 规则引擎会加载此文件，并用其内容来匹配检查项收集到的数据。
+
+iocs:
+  - name: "Known_Malicious_IPs"
+    enabled: true
+    type: "ip"
+    description: "一个来自各种威胁情报源的、已知的恶意或可疑IP地址列表。"
+    indicators:
+      - "103.45.12.99"   # 示例: 已知 C2 服务器
+      - "185.191.171.23" # 示例: 已知暴力破解源
+      - "45.9.148.101"   # 示例: 已知扫描器 IP
+
+  - name: "Common_Malware_Filenames"
+    enabled: true
+    type: "filename"
+    description: "一个包含常见恶意软件或矿机程序文件名的列表。"
+    match_type: "keyword" # 匹配类型可以是 keyword 或 regex
+    indicators:
+      - "kworkerds"
+      - "kerberods"
+      - "xmrig"
+      - "minerd"
+      - ".sshd" # 注意前面的点，常用于隐藏文件
+      
+  - name: "Suspicious_File_Extensions_In_Temp"
+    enabled: true
+    type: "filename"
+    description: "在临时目录中发现的可疑文件扩展名。"
+    match_type: "regex"
+    indicators:
+      - "\\.sh$"
+      - "\\.py$"
+      - "\\.pl$"
+      - "\\.exe$"

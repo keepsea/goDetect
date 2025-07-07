@@ -1,0 +1,15 @@
+# =============================================================================
+# FILE: rules/filesystem.yaml
+# 作用: 定义与文件系统异常相关的检测规则。
+# =============================================================================
+rules:
+  - name: "SUID_SGID_File_In_High_Risk_Directory"
+    enabled: true
+    description: "检测在高风险目录（如/tmp, /var/tmp, /dev/shm）中存在的SUID/SGID文件，这极有可能是提权后门。"
+    target_check: "SuidSgidFilesCheck"
+    type: "regex"
+    patterns:
+      - "^/tmp/"
+      - "^/var/tmp/"
+      - "^/dev/shm/"
+    risk_level: "Critical"

@@ -26,7 +26,6 @@ func GenerateReport(data types.ReportData) {
 - **生成工具:** {{.GeneratedBy}}
 - **总检查项:** {{.TotalChecks}}
 - **发现可疑项:** {{.SuspiciousCount}}
-- **待人工确认项:** {{.ManualReviewCount}}
 
 ---
 
@@ -35,13 +34,25 @@ func GenerateReport(data types.ReportData) {
 {{range .Checks}}
 ### {{.Category}} - {{.Description}}
 
-- **结果:** {{if .IsSuspicious}}**[可疑]**{{else}}{{if .NeedsManual}}**[待确认]**{{else}}[正常]{{end}}{{end}} {{.Result}}
+- **结果:** {{if .IsSuspicious}}**[可疑]**{{else}}[正常]{{end}} {{.Result}}
 
 <details>
 <summary>点击展开/折叠详细信息</summary>
 
 #### 检查说明
 > {{.Explanation}}
+
+{{if .Findings}}
+#### 规则匹配发现 ({{len .Findings}})
+` + "```" + `
+{{range .Findings}}
+[规则: {{.RuleName}}] [风险: {{.RiskLevel}}]
+说明: {{.Description}}
+匹配内容: {{.MatchedLine}}
+---
+{{end}}
+` + "```" + `
+{{end}}
 
 #### 原始数据
 ` + "```" + `

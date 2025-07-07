@@ -1,0 +1,16 @@
+# =============================================================================
+# FILE: rules/kernel.yaml
+# 作用: 定义与内核模块相关的检测规则。
+# =============================================================================
+rules:
+  - name: "Known_Rootkit_Kernel_Module"
+    enabled: true
+    description: "通过名称检测已知的Rootkit内核模块。"
+    target_check: "KernelModulesCheck"
+    type: "keyword"
+    patterns:
+      - "khide"
+      - "reptile"
+      - "diamorphine"
+      - "adore-ng"
+    risk_level: "Critical"

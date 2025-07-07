@@ -1,0 +1,26 @@
+# =============================================================================
+# FILE: rules/history.yaml
+# 作用: 定义与命令历史相关的检测规则。
+# =============================================================================
+rules:
+  - name: "History_Reverse_Shell"
+    enabled: true
+    description: "在命令历史中检测常见的反弹shell命令。"
+    target_check: "HistoryCheck"
+    type: "keyword"
+    patterns:
+      - "nc -e /bin/sh"
+      - "ncat -e /bin/bash"
+      - "bash -i >& /dev/tcp/"
+      - "python -c 'import socket"
+      - "php -r '$sock=fsockopen"
+    risk_level: "High"
+
+  - name: "History_Download_Execution"
+    enabled: true
+    description: "在命令历史中检测下载并执行脚本的行为。"
+    target_check: "HistoryCheck"
+    type: "regex"
+    patterns:
+      - "(curl|wget).*\\|.*(sh|bash)"
+    risk_level: "High"

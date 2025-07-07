@@ -1,0 +1,22 @@
+# =============================================================================
+# FILE: rules/account.yaml
+# 作用: 定义与账户安全相关的检测规则。
+# =============================================================================
+rules:
+  - name: "Sudoers_Nopasswd_Abuse"
+    enabled: true
+    description: "检测 sudoers 配置中存在的高危 NOPASSWD 选项，该选项允许用户无需密码即执行特权命令。"
+    target_check: "SudoersCheck"
+    type: "regex"
+    patterns:
+      - "(?i)NOPASSWD" # (?i) 表示不区分大小写
+    risk_level: "High"
+
+  - name: "SSH_Brute_Force_Attack"
+    enabled: true
+    description: "检测来自同一IP的大量失败登录尝试，表明可能正在遭受暴力破解攻击。"
+    target_check: "FailedLoginsCheck"
+    type: "agg_regex"
+    pattern: "(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})" # 捕获组用于提取IP
+    condition: "count > 10" # 当同一个IP的count大于10时触发
+    risk_level: "Medium"

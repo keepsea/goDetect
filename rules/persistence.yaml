@@ -1,0 +1,22 @@
+# =============================================================================
+# FILE: rules/persistence.yaml
+# 作用: 定义与持久化机制（如定时任务）相关的检测规则。
+# =============================================================================
+rules:
+  - name: "Cronjob_Downloads_And_Executes_Script"
+    enabled: true
+    description: "检测直接从网络下载脚本并执行的定时任务，这是非常典型的一种后门植入方式。"
+    target_check: "CronJobsCheck"
+    type: "regex"
+    patterns:
+      - "(curl|wget).*\\|.*sh"
+    risk_level: "Critical"
+
+  - name: "Cronjob_Base64_Execution"
+    enabled: true
+    description: "检测通过base64解码来执行命令的定时任务，这是一种常见的代码混淆手段。"
+    target_check: "CronJobsCheck"
+    type: "keyword"
+    patterns:
+      - "base64 -d"
+    risk_level: "High"

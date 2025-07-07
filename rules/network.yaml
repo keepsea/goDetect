@@ -1,0 +1,16 @@
+# =============================================================================
+# FILE: rules/network.yaml
+# 作用: 定义与网络连接相关的检测规则。
+# =============================================================================
+rules:
+  - name: "Suspicious_Listening_Port"
+    enabled: true
+    description: "检测已知的、常被恶意软件或后门使用的监听端口。"
+    target_check: "ListeningPortsCheck"
+    type: "keyword"
+    patterns:
+      - ":6666" # 常见IRC僵尸网络端口
+      - ":31337" # Back Orifice
+      - ":4444" # Metasploit 默认监听端口
+      - ":5555"
+    risk_level: "High"
