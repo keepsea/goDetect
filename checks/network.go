@@ -1,6 +1,3 @@
-// ==============================================================================
-// checks/network.go - 网络连接相关的检查项
-// ==============================================================================
 package checks
 
 import (
@@ -62,7 +59,7 @@ func (c EstablishedConnectionsCheck) Execute() []types.CheckResult {
 	}
 	cr.Details = "--- 原始输出 ---\n" + out
 
-	// ** NEW **: 使用IOC进行IP匹配
+	// 使用IOC进行IP匹配
 	re := regexp.MustCompile(`(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):\d+`)
 	scanner := bufio.NewScanner(strings.NewReader(out))
 	for scanner.Scan() {

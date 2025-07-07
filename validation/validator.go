@@ -1,4 +1,3 @@
-// FILE: validation/validator.go
 package validation
 
 import (

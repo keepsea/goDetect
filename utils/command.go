@@ -6,10 +6,6 @@ import (
 	"os/exec"
 )
 
-//==============================================================================
-// utils/command.go - 提供通用工具函数
-//==============================================================================
-
 // RunCommand 辅助函数，用于执行shell命令并返回其输出
 func RunCommand(name string, args ...string) (string, error) {
 	cmd := exec.Command(name, args...)

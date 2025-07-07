@@ -1,4 +1,3 @@
-// FILE: checks/history.go
 package checks
 
 import (

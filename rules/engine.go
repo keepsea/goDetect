@@ -1,4 +1,3 @@
-// FILE: rules/engine.go
 package rules
 
 import (

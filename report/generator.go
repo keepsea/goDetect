@@ -1,4 +1,3 @@
-// FILE: report/generator.go
 package report
 
 import (

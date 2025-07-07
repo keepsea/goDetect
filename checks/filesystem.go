@@ -1,4 +1,3 @@
-// FILE: checks/filesystem.go
 package checks
 
 import (

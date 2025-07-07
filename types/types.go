@@ -1,6 +1,3 @@
-// ==============================================================================
-// types/types.go - 定义项目核心数据结构
-// ==============================================================================
 package types
 
 import "github.com/keepsea/goDetect/rules"
@@ -24,5 +21,5 @@ type CheckResult struct {
 	Details      string
 	Explanation  string
 	IsSuspicious bool
-	Findings     []rules.Finding // ** NEW **: 用于存放规则匹配结果
+	Findings     []rules.Finding // 用于存放规则匹配结果
 }

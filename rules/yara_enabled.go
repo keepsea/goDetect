@@ -1,4 +1,3 @@
-// ** 注意: 文件顶部必须有这个构建标签 **
 //go:build yara
 
 package rules
