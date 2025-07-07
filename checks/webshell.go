@@ -17,8 +17,10 @@ import (
 
 // --- WebshellCheck ---
 type WebshellCheck struct {
-	RuleEngine *rules.RuleEngine
-	WebPath    string
+	RuleEngine     *rules.RuleEngine
+	WebPath        string
+	HemaPath       string
+	HemaResultPath string
 }
 
 func (c WebshellCheck) Description() string { return "Webshell 检测" }
@@ -27,13 +29,14 @@ func (c WebshellCheck) Execute() []types.CheckResult {
 		Category: "🌐 Web安全", Description: c.Description(),
 		Explanation: "作用: 通过专业的Webshell扫描工具（河马）对Web目录进行深度扫描，发现潜在的网页后门。\n检查方法: 执行 `./hm scan [PATH]` 命令，并解析其生成的 `result.csv` 文件。\n判断依据: `result.csv` 中列出的所有文件都应被视为风险项，需要人工进行代码审计确认。",
 	}
-	scannerPath, resultFilePath := "./hm", "./result.csv"
+	scannerPath := c.HemaPath
+	resultFilePath := c.HemaResultPath
 	if _, err := os.Stat(scannerPath); os.IsNotExist(err) {
 		cr.IsSuspicious, cr.Result, cr.Details = true, "扫描失败", "未在当前目录下找到河马工具 'hm'。"
 		return []types.CheckResult{cr}
 	}
 	os.Remove(resultFilePath)
-	_, err := utils.RunCommand(scannerPath, "scan", c.WebPath)
+	_, err := utils.RunCommand(scannerPath, "scan", c.WebPath, "--output", resultFilePath)
 	if err != nil {
 		cr.IsSuspicious, cr.Result, cr.Details = true, "扫描命令执行失败", fmt.Sprintf("执行 '%s scan %s' 时发生错误: %s", scannerPath, c.WebPath, err.Error())
 		return []types.CheckResult{cr}

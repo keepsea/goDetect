@@ -1,0 +1,46 @@
+# goDetect 中心化配置文件 (v19)
+#
+# 程序启动时会优先加载此文件中的配置。
+# 命令行中指定的参数会覆盖此文件中的同名配置。
+
+# 报告输出格式 (md, json)
+output: "md"
+
+# 内存使用限制 (MB)，0为不限制
+mem_limit_mb: 0
+
+# 登录记录审计条数
+login_limit: 100
+
+# 近期文件修改检查配置
+mtime:
+  path: "/etc,/var/log" # 可以配置多个路径，用逗号分隔
+  days: 14
+
+# SUID/SGID 文件扫描目录 (用逗号分隔)
+suid_dirs: "/bin,/sbin,/usr/bin,/usr/sbin"
+
+# 要检查的命令历史文件名列表
+history_filenames:
+  - ".bash_history"
+  - ".zsh_history"
+  - ".history"
+
+# 要检查的临时目录列表
+temp_dirs:
+  - "/tmp"
+  - "/var/tmp"
+  - "/dev/shm"
+
+# 河马工具的可执行文件路径
+hema_path: "./hm"
+# 河马工具扫描结果的输出路径
+hema_result_path: "./result.csv"
+# Webshell 扫描路径 (为空则不扫描)
+webpath: ""
+
+# 安全检测规则文件所在的目录
+rules_dir: "./rules"
+
+# 威胁情报库 (IOC) 文件路径
+ioc_path: "./ioc.yaml"

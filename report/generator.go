@@ -1,10 +1,8 @@
-//==============================================================================
-// report/generator.go - 报告生成器
-//==============================================================================
-
+// FILE: report/generator.go
 package report
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"os"
@@ -13,8 +11,15 @@ import (
 	"github.com/keepsea/goDetect/types"
 )
 
-// GenerateReport 使用模板生成 Markdown 报告并保存到文件
-func GenerateReport(data types.ReportData) {
+// Generator 是所有报告生成器都必须实现的接口
+type Generator interface {
+	Generate(data types.ReportData) error
+}
+
+// --- MarkdownGenerator ---
+type MarkdownGenerator struct{}
+
+func (g MarkdownGenerator) Generate(data types.ReportData) error {
 	reportTemplate := `
 # 主机失陷检测报告
 
@@ -46,7 +51,7 @@ func GenerateReport(data types.ReportData) {
 #### 规则匹配发现 ({{len .Findings}})
 ` + "```" + `
 {{range .Findings}}
-[规则: {{.RuleName}}] [风险: {{.RiskLevel}}]
+[{{.Source}} | 规则: {{.Name}}] [风险: {{.RiskLevel}}]
 说明: {{.Description}}
 匹配内容: {{.MatchedLine}}
 ---
@@ -64,22 +69,44 @@ func GenerateReport(data types.ReportData) {
 ---
 {{end}}
 `
-	fileName := fmt.Sprintf("host_check_report_%s_%s.md", data.Hostname, time.Now().Format("20060102150405"))
+	fileName := fmt.Sprintf("host_check_report_%s.md", time.Now().Format("20060102150405"))
 	tmpl, err := template.New("report").Parse(reportTemplate)
 	if err != nil {
-		fmt.Println("错误：创建报告模板失败:", err)
-		return
+		return fmt.Errorf("创建Markdown模板失败: %w", err)
 	}
+
 	file, err := os.Create(fileName)
 	if err != nil {
-		fmt.Println("错误：创建报告文件失败:", err)
-		return
+		return fmt.Errorf("创建Markdown报告文件失败: %w", err)
 	}
 	defer file.Close()
+
 	err = tmpl.Execute(file, data)
 	if err != nil {
-		fmt.Println("错误：生成报告失败:", err)
-		return
+		return fmt.Errorf("生成Markdown报告失败: %w", err)
 	}
-	fmt.Printf("检测完成！报告已生成到当前目录下的文件: %s\n", fileName)
+
+	fmt.Printf("Markdown报告已生成: %s\n", fileName)
+	return nil
+}
+
+// --- JsonGenerator ---
+type JsonGenerator struct{}
+
+func (g JsonGenerator) Generate(data types.ReportData) error {
+	fileName := fmt.Sprintf("host_check_report_%s.json", time.Now().Format("20060102150405"))
+	file, err := os.Create(fileName)
+	if err != nil {
+		return fmt.Errorf("创建JSON报告文件失败: %w", err)
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ") // 格式化输出
+	err = encoder.Encode(data)
+	if err != nil {
+		return fmt.Errorf("生成JSON报告失败: %w", err)
+	}
+	fmt.Printf("JSON报告已生成: %s\n", fileName)
+	return nil
 }

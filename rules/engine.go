@@ -1,6 +1,5 @@
-package rules
-
 // FILE: rules/engine.go
+package rules
 
 import (
 	"fmt"
@@ -10,21 +9,21 @@ import (
 	"strconv"
 	"strings"
 
+	yara "github.com/hillu/go-yara/v4"
 	"gopkg.in/yaml.v3"
 )
 
 // Rule 定义了单条检测规则的结构
 type Rule struct {
-	Name        string   `yaml:"name"`
-	Enabled     bool     `yaml:"enabled"`
-	Description string   `yaml:"description"`
-	TargetCheck string   `yaml:"target_check"`
-	Type        string   `yaml:"type"`
-	Patterns    []string `yaml:"patterns"`
-	Pattern     string   `yaml:"pattern"`
-	Condition   string   `yaml:"condition"`
-	RiskLevel   string   `yaml:"risk_level"`
-	// 内部字段，用于存放预编译的正则表达式
+	Name                string           `yaml:"name"`
+	Enabled             bool             `yaml:"enabled"`
+	Description         string           `yaml:"description"`
+	TargetCheck         string           `yaml:"target_check"`
+	Type                string           `yaml:"type"`
+	Patterns            []string         `yaml:"patterns"`
+	Pattern             string           `yaml:"pattern"`
+	Condition           string           `yaml:"condition"`
+	RiskLevel           string           `yaml:"risk_level"`
 	precompiledPatterns []*regexp.Regexp `yaml:"-"`
 }
 
@@ -33,7 +32,7 @@ type RuleFile struct {
 	Rules []Rule `yaml:"rules"`
 }
 
-// ** NEW **: 定义 IOC 结构
+// IOC 定义了威胁情报的结构
 type IOC struct {
 	Name                  string           `yaml:"name"`
 	Enabled               bool             `yaml:"enabled"`
@@ -44,32 +43,39 @@ type IOC struct {
 	precompiledIndicators []*regexp.Regexp `yaml:"-"`
 }
 
+// IOCFile 定义了威胁情报文件的结构
 type IOCFile struct {
 	IOCs []IOC `yaml:"iocs"`
 }
 
-// RuleEngine 结构体扩展，增加 IOC 存储
+// RuleEngine 是规则引擎的核心结构
 type RuleEngine struct {
 	rulesByCheck map[string][]Rule
-	iocsByType   map[string][]IOC // ** NEW **
+	iocsByType   map[string][]IOC
+	yaraCompiler *yara.Compiler
 }
 
 // Finding 代表一个由规则或IOC匹配产生的风险发现
 type Finding struct {
-	Source      string // "Rule" or "IOC"
+	Source      string // "Rule", "IOC", or "YARA"
 	Name        string
 	Description string
 	RiskLevel   string
 	MatchedLine string
 }
 
+// NewRuleEngine 创建并初始化一个新的规则引擎
 func NewRuleEngine(rulesDir string, iocPath string) (*RuleEngine, error) {
 	engine := &RuleEngine{
 		rulesByCheck: make(map[string][]Rule),
 		iocsByType:   make(map[string][]IOC),
 	}
 
-	// ** 1. 加载规则文件 **
+	// 调用 initYara, Go会根据构建标签自动选择正确的版本
+	// 这个函数在 yara_enabled.go 或 yara_disabled.go 中定义
+	initYara(engine, rulesDir)
+
+	// --- 加载 YAML 规则文件 ---
 	files, err := ioutil.ReadDir(rulesDir)
 	if err != nil {
 		return nil, fmt.Errorf("无法读取规则目录 '%s': %w", rulesDir, err)
@@ -91,12 +97,13 @@ func NewRuleEngine(rulesDir string, iocPath string) (*RuleEngine, error) {
 				continue
 			}
 
-			for _, rule := range ruleFile.Rules {
+			for i := range ruleFile.Rules {
+				rule := &ruleFile.Rules[i]
 				if !rule.Enabled {
 					continue
 				}
 
-				// ** 规则预编译 **
+				// 规则预编译
 				if rule.Type == "regex" {
 					for _, p := range rule.Patterns {
 						re, err := regexp.Compile(p)
@@ -114,12 +121,13 @@ func NewRuleEngine(rulesDir string, iocPath string) (*RuleEngine, error) {
 					}
 					rule.precompiledPatterns = []*regexp.Regexp{re}
 				}
-				// ** 规则分组 **
-				engine.rulesByCheck[rule.TargetCheck] = append(engine.rulesByCheck[rule.TargetCheck], rule)
+				// 规则分组
+				engine.rulesByCheck[rule.TargetCheck] = append(engine.rulesByCheck[rule.TargetCheck], *rule)
 			}
 		}
 	}
-	// ** 2. 加载 IOC 文件 **
+
+	// --- 加载 IOC 文件 ---
 	iocFileContent, err := ioutil.ReadFile(iocPath)
 	if err != nil {
 		fmt.Printf("警告: 无法读取威胁情报文件 '%s', IOC功能将不可用: %v\n", iocPath, err)
@@ -130,7 +138,7 @@ func NewRuleEngine(rulesDir string, iocPath string) (*RuleEngine, error) {
 			fmt.Printf("警告: 无法解析威胁情报文件 '%s', IOC功能将不可用: %v\n", iocPath, err)
 		} else {
 			for i := range iocFile.IOCs {
-				ioc := &iocFile.IOCs[i] // 使用指针以修改原始切片中的元素
+				ioc := &iocFile.IOCs[i]
 				if !ioc.Enabled {
 					continue
 				}
@@ -207,12 +215,13 @@ func (e *RuleEngine) Match(checkName string, content string) []Finding {
 				for _, pattern := range rule.Patterns {
 					if strings.Contains(line, pattern) {
 						findings = append(findings, Finding{
+							Source:      "Rule",
 							Name:        rule.Name,
 							Description: rule.Description,
 							RiskLevel:   rule.RiskLevel,
 							MatchedLine: line,
 						})
-						break // 当前行已匹配，继续下一行
+						break
 					}
 				}
 			}
@@ -221,17 +230,21 @@ func (e *RuleEngine) Match(checkName string, content string) []Finding {
 				for _, re := range rule.precompiledPatterns {
 					if re.MatchString(line) {
 						findings = append(findings, Finding{
+							Source:      "Rule",
 							Name:        rule.Name,
 							Description: rule.Description,
 							RiskLevel:   rule.RiskLevel,
 							MatchedLine: line,
 						})
-						break // 当前行已匹配，继续下一行
+						break
 					}
 				}
 			}
 		case "agg_regex":
 			counts := make(map[string]int)
+			if len(rule.precompiledPatterns) == 0 {
+				continue
+			}
 			re := rule.precompiledPatterns[0]
 			for _, line := range lines {
 				matches := re.FindStringSubmatch(line)
@@ -240,7 +253,6 @@ func (e *RuleEngine) Match(checkName string, content string) []Finding {
 				}
 			}
 
-			// 解析 condition
 			parts := strings.Fields(rule.Condition)
 			if len(parts) == 3 && parts[0] == "count" {
 				threshold, err := strconv.Atoi(parts[2])
@@ -266,6 +278,7 @@ func (e *RuleEngine) Match(checkName string, content string) []Finding {
 					}
 					if trigger {
 						findings = append(findings, Finding{
+							Source:      "Rule",
 							Name:        rule.Name,
 							Description: rule.Description,
 							RiskLevel:   rule.RiskLevel,

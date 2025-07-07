@@ -6,4 +6,7 @@ module github.com/keepsea/goDetect
 
 go 1.18
 
-require gopkg.in/yaml.v3 v3.0.1 // indirect
+require (
+	github.com/hillu/go-yara/v4 v4.3.4 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
