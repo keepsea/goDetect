@@ -29,6 +29,24 @@ func (c ListeningPortsCheck) Execute() []types.CheckResult {
 	return []types.CheckResult{cr}
 }
 
+// ** NEW ** EstablishedConnectionsCheck 检查已建立的网络连接
+type EstablishedConnectionsCheck struct{}
+
+func (c EstablishedConnectionsCheck) Execute() []types.CheckResult {
+	cr := types.CheckResult{Category: "🔌 网络连接", Description: "检查已建立的TCP连接 (ss -ntp)", NeedsManual: true, IsSuspicious: true}
+	out, err := utils.RunCommand("ss", "-ntp")
+	if err != nil {
+		out, err = utils.RunCommand("netstat", "-ntp")
+		if err != nil {
+			cr.Result, cr.Details = "检查失败", "无法执行 'ss' 和 'netstat' 命令: "+err.Error()
+			return []types.CheckResult{cr}
+		}
+	}
+	cr.Result = "提取所有已建立的TCP连接供人工审计"
+	cr.Details = "请检查有无可疑的外部IP地址连接，这可能是C2通信。\n\n--- 原始结果 ---\n" + out
+	return []types.CheckResult{cr}
+}
+
 // PromiscuousModeCheck 检查网卡混杂模式
 type PromiscuousModeCheck struct{}
 

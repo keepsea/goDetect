@@ -41,7 +41,7 @@ func main() {
 	// --- 2. 初始化报告数据 ---
 	reportData := types.ReportData{
 		Timestamp:   time.Now().Format("2006-01-02 15:04:05 MST"),
-		GeneratedBy: "Kylin Host Compromise Check Tool v5 (Modular-Fixed)",
+		GeneratedBy: "Kylin Host Compromise Check Tool v7 (Optimized)",
 	}
 	hostname, err := os.Hostname()
 	if err == nil {
@@ -60,11 +60,14 @@ func main() {
 		checks.SudoersCheck{},
 		checks.LastLoginsCheck{},
 		checks.FailedLoginsCheck{},
+		// ** NEW ** 命令历史
+		checks.HistoryCheck{},
 		// 进程与服务
 		checks.SuspiciousProcessesCheck{},
 		checks.DeletedRunningProcessesCheck{},
 		// 网络连接
 		checks.ListeningPortsCheck{},
+		checks.EstablishedConnectionsCheck{}, // ** NEW **
 		checks.PromiscuousModeCheck{},
 		// 文件系统
 		checks.SuidSgidFilesCheck{},
