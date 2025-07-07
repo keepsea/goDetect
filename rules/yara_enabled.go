@@ -42,6 +42,10 @@ func (e *RuleEngine) ScanFileWithYara(filePath string) []Finding {
 	if e.yaraCompiler == nil {
 		return findings
 	}
+	compiler, ok := e.yaraCompiler.(*yara.Compiler)
+	if !ok || compiler == nil {
+		return findings
+	}
 
 	rules, err := e.yaraCompiler.GetRules()
 	if err != nil {

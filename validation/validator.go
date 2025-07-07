@@ -1,13 +1,12 @@
+// FILE: validation/validator.go
 package validation
 
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"regexp"
 
-	yara "github.com/hillu/go-yara/v4"
 	"gopkg.in/yaml.v3"
 )
 
@@ -44,7 +43,8 @@ func ValidateRules(rulesDir string, iocPath string) bool {
 
 	// 1. 验证 YAML 规则文件
 	yamlFiles, _ := filepath.Glob(filepath.Join(rulesDir, "*.yaml"))
-	yamlFiles = append(yamlFiles, filepath.Join(rulesDir, "*.yml"))
+	ymlFiles, _ := filepath.Glob(filepath.Join(rulesDir, "*.yml"))
+	yamlFiles = append(yamlFiles, ymlFiles...)
 
 	for _, filePath := range yamlFiles {
 		if filePath == "" {
@@ -77,6 +77,9 @@ func ValidateRules(rulesDir string, iocPath string) bool {
 					patterns = []string{rule.Pattern}
 				}
 				for _, p := range patterns {
+					if p == "" {
+						continue
+					}
 					_, err := regexp.Compile(p)
 					if err != nil {
 						fmt.Printf("  ERROR: Rule #%d ('%s') has an invalid regex pattern '%s': %v\n", i+1, rule.Name, p, err)
@@ -87,36 +90,9 @@ func ValidateRules(rulesDir string, iocPath string) bool {
 		}
 	}
 
-	// 2. 验证 YARA 规则文件
-	yaraFiles, _ := filepath.Glob(filepath.Join(rulesDir, "*.yar"))
-	yaraFiles = append(yaraFiles, filepath.Join(rulesDir, "*.yara"))
-
-	if len(yaraFiles) > 0 {
-		compiler, err := yara.NewCompiler()
-		if err != nil {
-			fmt.Println("  ERROR: Could not create YARA compiler. Is YARA library installed correctly?")
-			errorCount++
-		} else {
-			for _, filePath := range yaraFiles {
-				if filePath == "" {
-					continue
-				}
-				fmt.Printf("Validating YARA file: %s\n", filePath)
-				f, err := os.Open(filePath)
-				if err != nil {
-					fmt.Printf("  ERROR: Failed to read file: %v\n", err)
-					errorCount++
-					continue
-				}
-				err = compiler.AddFile(f, filepath.Base(filePath))
-				f.Close()
-				if err != nil {
-					fmt.Printf("  ERROR: YARA syntax error: %v\n", err)
-					errorCount++
-				}
-			}
-		}
-	}
+	// 2. 调用YARA验证函数 (它将在其他文件中被定义)
+	yaraErrorCount := validateYaraRules(rulesDir)
+	errorCount += yaraErrorCount
 
 	// 3. 验证 IOC 文件
 	fmt.Printf("Validating IOC file: %s\n", iocPath)

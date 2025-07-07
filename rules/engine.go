@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	yara "github.com/hillu/go-yara/v4"
 	"gopkg.in/yaml.v3"
 )
 
@@ -51,7 +50,7 @@ type IOCFile struct {
 type RuleEngine struct {
 	rulesByCheck map[string][]Rule
 	iocsByType   map[string][]IOC
-	yaraCompiler *yara.Compiler
+	yaraCompiler interface{}
 }
 
 // Finding 代表一个由规则或IOC匹配产生的风险发现
