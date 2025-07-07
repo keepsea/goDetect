@@ -30,39 +30,20 @@ func GenerateReport(data types.ReportData) {
 
 ---
 
-## 2. 自动检测结果
-
-本部分列出了程序根据预设规则判断的结果。标记为 **[可疑]** 的项目需要您特别关注。
+## 2. 详细检测结果
 
 {{range .Checks}}
 ### {{.Category}} - {{.Description}}
 
-- **结果:** {{if .IsSuspicious}}**[可疑]** {{else}}{{if eq .Result "[跳过]"}}**[跳过]**{{else}}[正常]{{end}}{{end}} {{.Result}}
-{{if or .IsSuspicious (eq .Result "[跳过]")}}
-<details>
-<summary>点击查看详细信息</summary>
-
-` + "```" + `
-{{.Details}}
-` + "```" + `
-
-</details>
-{{end}}
----
-{{end}}
-
-## 3. 待人工确认项
-
-本部分列出的项目程序无法自动判断其是否异常，**需要您根据业务场景和系统正常状态进行人工审计**。这些项目本身不一定代表失陷，但攻击者常在这些地方留下痕迹。
-
-{{range .ManualChecks}}
-### {{.Category}} - {{.Description}}
-
-- **说明:** {{.Result}}
+- **结果:** {{if .IsSuspicious}}**[可疑]**{{else}}{{if .NeedsManual}}**[待确认]**{{else}}[正常]{{end}}{{end}} {{.Result}}
 
 <details>
-<summary>点击展开详细审计数据</summary>
+<summary>点击展开/折叠详细信息</summary>
 
+#### 检查说明
+> {{.Explanation}}
+
+#### 原始数据
 ` + "```" + `
 {{.Details}}
 ` + "```" + `

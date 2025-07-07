@@ -14,6 +14,7 @@ import (
 // HistoryCheck 检查所有用户的命令历史
 type HistoryCheck struct{}
 
+func (c HistoryCheck) Description() string { return "检查所有用户的命令历史记录" }
 func (c HistoryCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{
 		Category:     "📝 命令历史",

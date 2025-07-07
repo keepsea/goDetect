@@ -14,6 +14,7 @@ import (
 // ListeningPortsCheck 检查监听端口
 type ListeningPortsCheck struct{}
 
+func (c ListeningPortsCheck) Description() string { return "检查监听端口" }
 func (c ListeningPortsCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{Category: "🔌 网络连接", Description: "检查监听端口 (ss -lntup)", NeedsManual: true, IsSuspicious: true}
 	out, err := utils.RunCommand("ss", "-lntup")
@@ -32,6 +33,7 @@ func (c ListeningPortsCheck) Execute() []types.CheckResult {
 // ** NEW ** EstablishedConnectionsCheck 检查已建立的网络连接
 type EstablishedConnectionsCheck struct{}
 
+func (c EstablishedConnectionsCheck) Description() string { return "检查已建立的TCP连接" }
 func (c EstablishedConnectionsCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{Category: "🔌 网络连接", Description: "检查已建立的TCP连接 (ss -ntp)", NeedsManual: true, IsSuspicious: true}
 	out, err := utils.RunCommand("ss", "-ntp")
@@ -50,6 +52,7 @@ func (c EstablishedConnectionsCheck) Execute() []types.CheckResult {
 // PromiscuousModeCheck 检查网卡混杂模式
 type PromiscuousModeCheck struct{}
 
+func (c PromiscuousModeCheck) Description() string { return "检查网卡是否处于混杂模式" }
 func (c PromiscuousModeCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{Category: "🔌 网络连接", Description: "检查网卡是否处于混杂模式"}
 	out, err := utils.RunCommand("ip", "link")

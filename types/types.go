@@ -22,6 +22,7 @@ type CheckResult struct {
 	Description  string // 检查项描述
 	Result       string // 检查结果的简要说明
 	Details      string // 详细的原始输出或解释
+	Explanation  string // ** NEW **: 对检查项的详细说明
 	IsSuspicious bool   // 是否可疑
 	NeedsManual  bool   // 是否需要人工确认
 }

@@ -11,6 +11,7 @@ import (
 // KernelModulesCheck 检查内核模块
 type KernelModulesCheck struct{}
 
+func (c KernelModulesCheck) Description() string { return "检查已加载的内核模块 (lsmod)" }
 func (c KernelModulesCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{Category: "🧠 内核与模块", Description: "检查已加载的内核模块 (lsmod)", NeedsManual: true, IsSuspicious: true}
 	out, err := utils.RunCommand("lsmod")

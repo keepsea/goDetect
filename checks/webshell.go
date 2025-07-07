@@ -19,6 +19,9 @@ type WebshellCheck struct {
 	WebPath string
 }
 
+func (c WebshellCheck) Description() string {
+	return "通过解析河马工具CSV结果进行 Webshell 检测"
+}
 func (c WebshellCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{
 		Category:    "🌐 Web安全",
