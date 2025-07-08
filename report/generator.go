@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/keepsea/goDetect/types"
@@ -12,13 +13,13 @@ import (
 
 // Generator 是所有报告生成器都必须实现的接口
 type Generator interface {
-	Generate(data types.ReportData) error
+	Generate(data types.ReportData, outputDir string) error
 }
 
 // --- MarkdownGenerator ---
 type MarkdownGenerator struct{}
 
-func (g MarkdownGenerator) Generate(data types.ReportData) error {
+func (g MarkdownGenerator) Generate(data types.ReportData, outputDir string) error {
 	reportTemplate := `
 # 主机失陷检测报告
 
@@ -68,13 +69,19 @@ func (g MarkdownGenerator) Generate(data types.ReportData) error {
 ---
 {{end}}
 `
+	// 确保输出目录存在
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return fmt.Errorf("无法创建报告目录 '%s': %w", outputDir, err)
+	}
 	fileName := fmt.Sprintf("host_check_report_%s.md", time.Now().Format("20060102150405"))
+	filePath := filepath.Join(outputDir, fileName)
+
 	tmpl, err := template.New("report").Parse(reportTemplate)
 	if err != nil {
 		return fmt.Errorf("创建Markdown模板失败: %w", err)
 	}
 
-	file, err := os.Create(fileName)
+	file, err := os.Create(filePath)
 	if err != nil {
 		return fmt.Errorf("创建Markdown报告文件失败: %w", err)
 	}
@@ -85,16 +92,22 @@ func (g MarkdownGenerator) Generate(data types.ReportData) error {
 		return fmt.Errorf("生成Markdown报告失败: %w", err)
 	}
 
-	fmt.Printf("Markdown报告已生成: %s\n", fileName)
+	fmt.Printf("Markdown报告已生成: %s\n", filePath)
 	return nil
 }
 
 // --- JsonGenerator ---
 type JsonGenerator struct{}
 
-func (g JsonGenerator) Generate(data types.ReportData) error {
+func (g JsonGenerator) Generate(data types.ReportData, outputDir string) error {
+	// 确保输出目录存在
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return fmt.Errorf("无法创建报告目录 '%s': %w", outputDir, err)
+	}
 	fileName := fmt.Sprintf("host_check_report_%s.json", time.Now().Format("20060102150405"))
-	file, err := os.Create(fileName)
+	filePath := filepath.Join(outputDir, fileName)
+
+	file, err := os.Create(filePath)
 	if err != nil {
 		return fmt.Errorf("创建JSON报告文件失败: %w", err)
 	}
@@ -106,6 +119,6 @@ func (g JsonGenerator) Generate(data types.ReportData) error {
 	if err != nil {
 		return fmt.Errorf("生成JSON报告失败: %w", err)
 	}
-	fmt.Printf("JSON报告已生成: %s\n", fileName)
+	fmt.Printf("JSON报告已生成: %s\n", filePath)
 	return nil
 }

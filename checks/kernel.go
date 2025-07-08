@@ -13,11 +13,10 @@ type KernelModulesCheck struct {
 	RuleEngine *rules.RuleEngine
 }
 
-func (c KernelModulesCheck) Description() string { return "检查已加载的内核模块" }
+func (c KernelModulesCheck) Name() string { return "KernelModulesCheck" }
 func (c KernelModulesCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{
-		Category: "🧠 内核与模块", Description: c.Description(),
-		Explanation: "作用: Rootkit 可能会通过加载恶意内核模块来隐藏自身，这是最高权限的持久化方式之一。\n检查方法: 执行 `lsmod` 命令列出所有已加载的模块。\n判断依据: 规则引擎会根据 `rules/kernel.yaml` 等文件中的规则（如匹配已知恶意模块名）进行判断。",
+		Category: "🧠 内核与模块",
 	}
 	out, err := utils.RunCommand("lsmod")
 	if err != nil {

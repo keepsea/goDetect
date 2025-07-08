@@ -73,6 +73,7 @@ func main() {
 	validateRules := flag.Bool("validate-rules", false, "只验证规则文件的正确性，不执行扫描")
 	outputFormat := flag.String("output", cfg.Output, "报告输出格式 (md, json)")
 	memLimitMB := flag.Int64("mem-limit-mb", cfg.MemLimitMB, "设置程序的最大内存使用限制 (MB)，0为不限制")
+	reportOutputDir := flag.String("report-dir", cfg.ReportOutputDir, "报告输出目录")
 	webPath := flag.String("webpath", cfg.WebPath, "要扫描Webshell的Web目录绝对路径")
 	loginLimit := flag.Int("login-limit", cfg.LoginLimit, "要审计的最近登录记录条数")
 	mtimeDays := flag.Int("mtime-days", cfg.Mtime.Days, "要检查的近期文件修改天数范围")
@@ -89,9 +90,9 @@ func main() {
 	// 3. 规则验证模式
 	if *validateRules {
 		if !validation.ValidateRules(*rulesDir, *iocPath) {
-			os.Exit(1) // 如果验证失败，以非零状态码退出
+			os.Exit(1)
 		}
-		os.Exit(0) // 验证成功，正常退出
+		os.Exit(0)
 	}
 
 	// 4. 应用内存限制
@@ -152,7 +153,7 @@ func main() {
 		})
 	}
 
-	// 8. 并发执行所有检查并打印进度
+	// 8. 并发执行所有检查并填充元数据
 	fmt.Println("\n--- Starting Checks ---")
 	var allResults []types.CheckResult
 	var wg sync.WaitGroup
@@ -164,12 +165,33 @@ func main() {
 		wg.Add(1)
 		go func(c core.Checker) {
 			defer wg.Done()
+
 			results := c.Execute()
+			checkName := c.Name()
+
+			// 为结果填充元数据
+			if meta, ok := cfg.CheckTexts[checkName]; ok {
+				for i := range results {
+					// 如果检查项本身没有设置Description，则使用配置文件的
+					if results[i].Description == "" {
+						results[i].Description = meta.Description
+					}
+					results[i].Explanation = meta.Explanation
+				}
+			}
+
 			resultsChan <- results
+
+			// 更新进度
 			atomic.AddInt32(&completedChecks, 1)
 			currentCount := atomic.LoadInt32(&completedChecks)
 			percent := (float64(currentCount) / float64(totalChecks)) * 100
-			fmt.Printf("✔ [%d/%d] (%.0f%%) Completed: %s\n", currentCount, totalChecks, percent, c.Description())
+
+			desc := checkName
+			if meta, ok := cfg.CheckTexts[checkName]; ok {
+				desc = meta.Description
+			}
+			fmt.Printf("✔ [%d/%d] (%.0f%%) Completed: %s\n", currentCount, totalChecks, percent, desc)
 		}(chk)
 	}
 
@@ -214,7 +236,7 @@ func main() {
 	}
 
 	fmt.Println("\nScan complete. Generating report...")
-	err = reportGenerator.Generate(reportData)
+	err = reportGenerator.Generate(reportData, *reportOutputDir)
 	if err != nil {
 		fmt.Printf("错误: 生成报告失败: %v\n", err)
 	}

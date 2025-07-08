@@ -16,11 +16,10 @@ type SuspiciousProcessesCheck struct {
 	RuleEngine *rules.RuleEngine
 }
 
-func (c SuspiciousProcessesCheck) Description() string { return "检查可疑进程" }
+func (c SuspiciousProcessesCheck) Name() string { return "SuspiciousProcessesCheck" }
 func (c SuspiciousProcessesCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{
-		Category: "⚙️ 进程与服务", Description: c.Description(),
-		Explanation: "作用: 发现从临时目录启动、或名称/路径可疑的进程。\n检查方法: 执行 `ps aux` 命令获取所有进程信息。\n判断依据: 规则引擎会根据 `rules/process.yaml` 等文件中的规则（如进程路径包含/tmp/）进行判断，并自动排除自身进程。",
+		Category: "⚙️ 进程与服务",
 	}
 	out, err := utils.RunCommand("ps", "aux")
 	if err != nil {
@@ -61,13 +60,12 @@ type DeletedRunningProcessesCheck struct {
 	RuleEngine *rules.RuleEngine
 }
 
-func (c DeletedRunningProcessesCheck) Description() string {
-	return "检查已删除但仍在运行的进程"
+func (c DeletedRunningProcessesCheck) Name() string {
+	return "DeletedRunningProcessesCheck"
 }
 func (c DeletedRunningProcessesCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{
-		Category: "⚙️ 进程与服务", Description: c.Description(),
-		Explanation: "作用: 发现无文件落地（Fileless）的恶意软件。攻击者在启动程序后删除可执行文件以逃避检测。\n检查方法: 执行 `lsof +L1` 命令。\n判断依据: 任何被标记为 `(deleted)` 的进程都应被视为高度可疑。",
+		Category: "⚙️ 进程与服务",
 	}
 	out, err := utils.RunCommand("lsof", "+L1")
 	if err != nil {

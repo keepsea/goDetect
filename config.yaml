@@ -1,46 +1,104 @@
 # goDetect 运行配置文件
-#
-# 程序启动时会优先加载此文件中的配置。
-# 命令行中指定的参数会覆盖此文件中的同名配置。
+# 程序启动时会优先加载此文件中的配置，命令行中指定的参数会覆盖此文件中的同名配置。
 
-# 报告输出格式 (md, json)
-output: "md"
+# ===================================================================================
+# 路径配置
+# ===================================================================================
+# 河马工具的可执行文件路径
+hema_path: "./hm-linux-amd64/hm"
+# 河马工具扫描结果的输出路径
+hema_result_path: "./hm-linux-amd64/result.csv"
+# Webshell 扫描路径 (为空则不扫描)
+webpath: "/Users/okrj/codeGo/goddns/ddns_server/"
+# 安全检测规则文件所在的目录
+rules_dir: "./rules"
+# 威胁情报库 (IOC) 文件路径
+ioc_path: "./ioc.yaml"
 
+# ===================================================================================
+# 扫描参数配置
+# ===================================================================================
 # 内存使用限制 (MB)，0为不限制
 mem_limit_mb: 0
-
 # 登录记录审计条数
 login_limit: 100
-
 # 近期文件修改检查配置
 mtime:
   path: "/etc,/var/log" # 可以配置多个路径，用逗号分隔
   days: 14
-
 # SUID/SGID 文件扫描目录 (用逗号分隔)
 suid_dirs: "/bin,/sbin,/usr/bin,/usr/sbin"
-
 # 要检查的命令历史文件名列表
 history_filenames:
   - ".bash_history"
   - ".zsh_history"
   - ".history"
-
 # 要检查的临时目录列表
 temp_dirs:
   - "/tmp"
   - "/var/tmp"
   - "/dev/shm"
 
-# 河马工具的可执行文件路径
-hema_path: "./hm"
-# 河马工具扫描结果的输出路径
-hema_result_path: "./result.csv"
-# Webshell 扫描路径 (为空则不扫描)
-webpath: ""
-
-# 安全检测规则文件所在的目录
-rules_dir: "./rules"
-
-# 威胁情报库 (IOC) 文件路径
-ioc_path: "./ioc.yaml"
+#================================================================================== 
+# 报告配置
+#==================================================================================
+# 报告输出格式 (md, json)
+output: "md"
+# 报告输出目录
+report_output_dir: "./reports" 
+# 检查项报告文本配置
+check_texts:
+  RootAccountsCheck:
+    description: "检查具有 root 权限 (UID=0) 的账户"
+    explanation: "作用: 检查系统中是否存在除root之外的UID为0的特权账户。非root的特权账户是常见的后门形式。\n检查方法: 读取 /etc/passwd 文件，查找第三个字段（UID）为0的行。\n判断依据: 正常情况下，只有root用户的UID为0。任何其他账户如果UID为0，都应被视为极度可疑。"
+  EmptyPasswordAccountsCheck:
+    description: "检查空密码账户"
+    explanation: "作用: 空密码账户允许任何人无需密码即可登录，存在巨大安全风险。\n检查方法: 执行 `getent shadow` 或读取 `/etc/shadow`，检查密码字段是否为空或为锁定状态符号。\n判断依据: 除少数特定系统账户外，任何可登录用户的密码字段都不应为空。"
+  SudoersCheck:
+    description: "检查 Sudoers 配置"
+    explanation: "作用: Sudoers文件定义了哪些用户可以以其他用户（通常是root）的身份执行命令。不当的配置，特别是 `NOPASSWD`，会带来严重的安全风险。\n检查方法: 读取 /etc/sudoers 文件及 /etc/sudoers.d/ 目录下的所有文件。\n判断依据: 规则引擎会根据 `rules/sudoers.yaml` 等文件中的规则（如查找NOPASSWD）进行判断。"
+  LastLoginsCheck:
+    description: "检查最近%d登录记录"
+    explanation: "作用: 审计最近的成功登录记录，以发现未经授权的访问活动。\n检查方法: 执行 `last` 命令，并使用 `ioc.yaml` 中的IP黑名单进行比对。\n判断依据: 任何来自已知恶意IP的登录都应被视为高危事件。"
+  FailedLoginsCheck:
+    description: "检查失败登录记录"
+    explanation: "作用: 监控失败的登录尝试，有助于发现针对系统的暴力破解攻击。\n检查方法: 执行 `lastb` 命令获取登录失败日志。\n判断依据: 规则引擎会根据 `rules/failed_logins.yaml` 中的规则（如统计同一IP的失败次数）进行判断。"
+  HistoryCheck:
+    description: "检查所有用户的命令历史记录"
+    explanation: "作用: 命令历史直接揭示了攻击者可能执行过的操作，是追溯攻击路径的关键证据。\n检查方法: 读取所有用户主目录下的指定历史文件。\n判断依据: 规则引擎会根据 `ioc.yaml` 中 `type: history_keyword` 的规则进行判断。"
+  SuspiciousProcessesCheck:
+    description: "检查可疑进程"
+    explanation: "作用: 发现从临时目录启动、或名称/路径可疑的进程。\n检查方法: 执行 `ps aux` 命令获取所有进程信息。\n判断依据: 规则引擎会根据 `rules/process.yaml` 等文件中的规则（如进程路径包含/tmp/）进行判断，并自动排除自身进程。"
+  DeletedRunningProcessesCheck:
+    description: "检查已删除但仍在运行的进程"
+    explanation: "作用: 发现无文件落地（Fileless）的恶意软件。攻击者在启动程序后删除可执行文件以逃避检测。\n检查方法: 执行 `lsof +L1` 命令。\n判断依据: 任何被标记为 `(deleted)` 的进程都应被视为高度可疑。"
+  ListeningPortsCheck:
+    description: "检查监听端口"
+    explanation: "作用: 发现系统中所有正在监听网络连接的服务，以排查未经授权的后门或服务。\n检查方法: 执行 `ss -lntup` 或 `netstat -lntup` 命令。\n判断依据: 规则引擎会根据 `rules/network.yaml` 等文件中的规则（如查找已知恶意软件端口）进行判断，同时需要人工审计未知端口。"
+  EstablishedConnectionsCheck:
+    description: "检查已建立的TCP连接"
+    explanation: "作用: 发现本机与外部服务器之间所有已建立的连接，并通过IP黑名单排查C2通信。\n检查方法: 执行 `ss -ntp` 命令。\n判断依据: 任何与已知恶意IP建立的连接都应被视为高危事件。"
+  PromiscuousModeCheck:
+    description: "检查网卡是否处于混杂模式"
+    explanation: "作用: 混杂模式允许网卡捕获网段内所有流经的数据包，而不仅仅是发给本机的数据包。通常只有网络嗅探工具会开启此模式。\n检查方法: 执行 `ip link` 命令。\n判断依据: 任何处于 `PROMISC` 状态的网卡都应被视为可疑。"
+  SuidSgidFilesCheck:
+    description: "查找 SUID/SGID 文件"
+    explanation: "作用: SUID/SGID文件允许程序以文件所有者/组的权限运行，是黑客常用的提权手段。\n检查方法: 使用 `find` 命令在指定目录（默认为'/'）查找具有SUID(4000)或SGID(2000)权限位的文件。\n判断依据: 规则引擎会根据 `rules/filesystem.yaml` 等文件中的规则进行判断。"
+  RecentlyModifiedFilesCheck:
+    description: "检查 %s 目录下过去%d天的修改"
+    explanation: "作用: 检查系统关键目录中近期被修改的文件，有助于发现未经授权的配置更改。\n检查方法: 对指定的每个路径执行 `find [PATH] -type f -mtime -[DAYS]` 命令。\n判断依据: 需要人工审计列表，确认所有文件的变动是否符合预期。"
+  TempDirsCheck:
+    description: "检查临时目录中的可疑文件"
+    explanation: "作用: 临时目录是恶意软件的重灾区。\n检查方法: 列出指定临时目录下的所有文件。\n判断依据: 规则引擎会根据 `ioc.yaml` 中定义的恶意文件名、扩展名等模式进行匹配。"
+  CronJobsCheck:
+    description: "检查 Cron 定时任务"
+    explanation: "作用: Cron是Linux下用于持久化后门、执行恶意任务最常见的方式。\n检查方法: 读取系统级和所有用户级的crontab文件。\n判断依据: 规则引擎会根据 `rules/cron.yaml` 等文件中的规则（如 `curl|sh`, `base64` 等）进行判断。"
+  SystemdTimersCheck:
+    description: "检查 Systemd Timers"
+    explanation: "作用: Systemd Timers是比Cron更现代、更灵活的定时任务机制，同样可能被用于持久化后门。\n检查方法: 执行 `systemctl list-timers --all` 命令。\n判断依据: 需要人工审计列表中的定时器，确认其执行的单元（Unit）是否为合法、预期的系统或应用任务。"
+  KernelModulesCheck:
+    description: "检查已加载的内核模块"
+    explanation: "作用: Rootkit 可能会通过加载恶意内核模块来隐藏自身，这是最高权限的持久化方式之一。\n检查方法: 执行 `lsmod` 命令列出所有已加载的模块。\n判断依据: 规则引擎会根据 `rules/kernel.yaml` 等文件中的规则（如匹配已知恶意模块名）进行判断。"
+  WebshellCheck:
+    description: "Webshell 检测"
+    explanation: "作用: 通过专业的Webshell扫描工具（河马）对Web目录进行深度扫描，发现潜在的网页后门。\n检查方法: 执行 `[HemaPath] scan [PATH]` 命令，并解析其生成的CSV文件。\n判断依据: CSV文件中列出的所有文件都应被视为风险项，需要人工进行代码审计确认。"

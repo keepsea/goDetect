@@ -16,12 +16,10 @@ type SuidSgidFilesCheck struct {
 	Dirs       []string
 }
 
-func (c SuidSgidFilesCheck) Description() string { return "查找 SUID/SGID 文件" }
+func (c SuidSgidFilesCheck) Name() string { return "SuidSgidFilesCheck" }
 func (c SuidSgidFilesCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{
-		Category:    "🗂️ 文件系统",
-		Description: c.Description(),
-		Explanation: "作用: SUID/SGID文件允许程序以文件所有者/组的权限运行，是黑客常用的提权手段。\n检查方法: 使用 `find` 命令在指定目录（默认为'/'）查找具有SUID(4000)或SGID(2000)权限位的文件。\n判断依据: 规则引擎会根据 `rules/filesystem.yaml` 等文件中的规则进行判断。",
+		Category: "🗂️ 文件系统",
 	}
 
 	var allOutput []string
@@ -56,14 +54,12 @@ type RecentlyModifiedFilesCheck struct {
 	Days       int
 }
 
-func (c RecentlyModifiedFilesCheck) Description() string {
-	return fmt.Sprintf("检查 %s 目录下过去%d天的修改", strings.Join(c.Paths, ","), c.Days)
+func (c RecentlyModifiedFilesCheck) Name() string {
+	return fmt.Sprintf("RecentlyModifiedFilesCheck", strings.Join(c.Paths, ","), c.Days)
 }
 func (c RecentlyModifiedFilesCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{
-		Category:    "🗂️ 文件系统",
-		Description: c.Description(),
-		Explanation: "作用: 检查系统关键目录中近期被修改的文件，有助于发现未经授权的配置更改。\n检查方法: 对指定的每个路径执行 `find [PATH] -type f -mtime -[DAYS]` 命令。\n判断依据: 需要人工审计列表，确认所有文件的变动是否符合预期。",
+		Category: "🗂️ 文件系统",
 	}
 
 	var allOutput []string
@@ -89,12 +85,10 @@ type TempDirsCheck struct {
 	TempDirs   []string
 }
 
-func (c TempDirsCheck) Description() string { return "检查临时目录中的可疑文件" }
+func (c TempDirsCheck) Name() string { return "TempDirsCheck" }
 func (c TempDirsCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{
-		Category:    "🗂️ 文件系统",
-		Description: c.Description(),
-		Explanation: "作用: 临时目录是恶意软件的重灾区。\n检查方法: 列出 /tmp 和 /var/tmp 目录下的所有文件。\n判断依据: 规则引擎会根据 `ioc.yaml` 中定义的恶意文件名、扩展名等模式进行匹配。",
+		Category: "🗂️ 文件系统",
 	}
 	findArgs := append([]string{}, c.TempDirs...)
 	findArgs = append(findArgs, "-ls")

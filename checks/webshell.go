@@ -19,11 +19,10 @@ type WebshellCheck struct {
 	HemaResultPath string
 }
 
-func (c WebshellCheck) Description() string { return "Webshell 检测" }
+func (c WebshellCheck) Name() string { return "WebshellCheck" }
 func (c WebshellCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{
-		Category: "🌐 Web安全", Description: c.Description(),
-		Explanation: "作用: 通过专业的Webshell扫描工具（河马）对Web目录进行深度扫描，发现潜在的网页后门。\n检查方法: 执行 `./hm scan [PATH]` 命令，并解析其生成的 `result.csv` 文件。\n判断依据: `result.csv` 中列出的所有文件都应被视为风险项，需要人工进行代码审计确认。",
+		Category: "🌐 Web安全",
 	}
 	scannerPath := c.HemaPath
 	resultFilePath := c.HemaResultPath

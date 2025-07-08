@@ -16,11 +16,10 @@ type CronJobsCheck struct {
 	RuleEngine *rules.RuleEngine
 }
 
-func (c CronJobsCheck) Description() string { return "检查 Cron 定时任务" }
+func (c CronJobsCheck) Name() string { return "CronJobsCheck" }
 func (c CronJobsCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{
-		Category: "⏰ 持久化机制", Description: c.Description(),
-		Explanation: "作用: Cron是Linux下用于持久化后门、执行恶意任务最常见的方式。\n检查方法: 读取系统级和所有用户级的crontab文件。\n判断依据: 规则引擎会根据 `rules/cron.yaml` 等文件中的规则（如 `curl|sh`, `base64` 等）进行判断。",
+		Category: "⏰ 持久化机制",
 	}
 	var contentBuilder strings.Builder
 	sysCron, _ := os.ReadFile("/etc/crontab")
@@ -62,11 +61,10 @@ type SystemdTimersCheck struct {
 	RuleEngine *rules.RuleEngine
 }
 
-func (c SystemdTimersCheck) Description() string { return "检查 Systemd Timers" }
+func (c SystemdTimersCheck) Name() string { return "SystemdTimersCheck" }
 func (c SystemdTimersCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{
-		Category: "⏰ 持久化机制", Description: c.Description(),
-		Explanation: "作用: Systemd Timers是比Cron更现代、更灵活的定时任务机制，同样可能被用于持久化后门。\n检查方法: 执行 `systemctl list-timers --all` 命令。\n判断依据: 需要人工审计列表中的定时器，确认其执行的单元（Unit）是否为合法、预期的系统或应用任务。",
+		Category: "⏰ 持久化机制",
 	}
 	out, err := utils.RunCommand("systemctl", "list-timers", "--all")
 	if err != nil {

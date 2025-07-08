@@ -16,11 +16,10 @@ type ListeningPortsCheck struct {
 	RuleEngine *rules.RuleEngine
 }
 
-func (c ListeningPortsCheck) Description() string { return "检查监听端口" }
+func (c ListeningPortsCheck) Name() string { return "ListeningPortsCheck" }
 func (c ListeningPortsCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{
-		Category: "🔌 网络连接", Description: c.Description(),
-		Explanation: "作用: 发现系统中所有正在监听网络连接的服务，以排查未经授权的后门或服务。\n检查方法: 执行 `ss -lntup` 或 `netstat -lntup` 命令。\n判断依据: 规则引擎会根据 `rules/network.yaml` 等文件中的规则（如查找已知恶意软件端口）进行判断，同时需要人工审计未知端口。",
+		Category: "🔌 网络连接",
 	}
 	out, err := utils.RunCommand("ss", "-lntup")
 	if err != nil {
@@ -47,11 +46,10 @@ type EstablishedConnectionsCheck struct {
 	RuleEngine *rules.RuleEngine
 }
 
-func (c EstablishedConnectionsCheck) Description() string { return "检查已建立的TCP连接" }
+func (c EstablishedConnectionsCheck) Name() string { return "EstablishedConnectionsCheck" }
 func (c EstablishedConnectionsCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{
-		Category: "🔌 网络连接", Description: c.Description(),
-		Explanation: "作用: 发现本机与外部服务器之间所有已建立的连接，并通过IP黑名单排查C2通信。\n检查方法: 执行 `ss -ntp` 命令。\n判断依据: 任何与已知恶意IP建立的连接都应被视为高危事件。",
+		Category: "🔌 网络连接",
 	}
 	out, err := utils.RunCommand("ss", "-ntp")
 	if err != nil {
@@ -85,11 +83,10 @@ type PromiscuousModeCheck struct {
 	RuleEngine *rules.RuleEngine
 }
 
-func (c PromiscuousModeCheck) Description() string { return "检查网卡是否处于混杂模式" }
+func (c PromiscuousModeCheck) Name() string { return "PromiscuousModeCheck" }
 func (c PromiscuousModeCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{
-		Category: "🔌 网络连接", Description: c.Description(),
-		Explanation: "作用: 混杂模式允许网卡捕获网段内所有流经的数据包，而不仅仅是发给本机的数据包。通常只有网络嗅探工具会开启此模式。\n检查方法: 执行 `ip link` 命令。\n判断依据: 任何处于 `PROMISC` 状态的网卡都应被视为可疑。",
+		Category: "🔌 网络连接",
 	}
 	out, err := utils.RunCommand("ip", "link")
 	if err != nil {

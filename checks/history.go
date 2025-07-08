@@ -18,12 +18,10 @@ type HistoryCheck struct {
 	Filenames  []string
 }
 
-func (c HistoryCheck) Description() string { return "检查所有用户的命令历史记录" }
+func (c HistoryCheck) Name() string { return "HistoryCheck" }
 func (c HistoryCheck) Execute() []types.CheckResult {
 	cr := types.CheckResult{
-		Category:    "📝 命令历史",
-		Description: c.Description(),
-		Explanation: "作用: 命令历史直接揭示了攻击者可能执行过的操作，是追溯攻击路径的关键证据。\n检查方法: 读取所有用户主目录下的指定历史文件。\n判断依据: 规则引擎会根据 `ioc.yaml` 中 `type: history_keyword` 的规则进行判断。",
+		Category: "📝 命令历史",
 	}
 
 	var contentBuilder strings.Builder
